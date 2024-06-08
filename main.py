@@ -49,7 +49,13 @@ YOCO_SECRET_KEY = 'sk_test_d84e2b4fK1op2aR54bd4230b03e2' ### TESTING SECRET KEY 
 # YOCO_SECRET_KEY = 'sk_live_2c8a989aK1op2aR989746c895c77' ### LIVE SECRET KEY ###
 
 
-config = pdfkit.configuration(wkhtmltopdf='C:\\Program Files\\wkhtmltopdf\\bin\\wkhtmltopdf.exe')
+# config = pdfkit.configuration(wkhtmltopdf='C:\\Program Files\\wkhtmltopdf\\bin\\wkhtmltopdf.exe')
+if 'DYNO' in os.environ:  # Check if running on Heroku
+    path_wkhtmltopdf = '/app/bin/wkhtmltopdf'
+else:
+    path_wkhtmltopdf = r'C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe'  # Local path for development
+
+config = pdfkit.configuration(wkhtmltopdf=path_wkhtmltopdf)
 
 # mysql = MySQL(app)
 
