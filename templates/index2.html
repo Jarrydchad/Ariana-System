@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yoco Payment</title>
+    <script src="https://js.yoco.com/sdk/v1/yoco-sdk-web.js"></script>
+</head>
+<body>
+    <form id="payment-form" method="post" action="/pay">
+        Amount: <input type="text" name="amount" id="amount"><br>
+        <input type="hidden" id="token" name="token">
+        <button type="button" id="payButton">Pay</button>
+    </form>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            var yoco = new window.YocoSDK({
+                publicKey: 'pk_test_ecf37800XBYZGrE7f5c4'
+            });
+
+            var payButton = document.getElementById('payButton');
+            payButton.addEventListener('click', function () {
+                var amountInCents = Math.floor(document.getElementById('amount').value * 100);
+                yoco.showPopup({
+                    amountInCents: amountInCents,
+                    currency: 'ZAR',
+                    name: 'Test Payment',
+                    callback: function (result) {
+                        if (result.error) {
+                            alert("Error: " + result.error.message);
+                        } else {
+                            document.getElementById('token').value = result.id;
+                            document.getElementById('payment-form').submit();
+                        }
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

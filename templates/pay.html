@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link href="https://fonts.googleapis.com/css?family=Roboto:300,400&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="static/assets/fonts/icomoon/style.css">
+
+    <link rel="stylesheet" href="static/assets/css/owl.carousel.min.css">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="static/assets/css/bootstrap.min.css">
+    
+    <!-- Style -->
+    <link rel="stylesheet" href="static/assets/css/style.css">
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"
+        integrity="sha384-vtXRMe3mGCbOeY7l30aIg8H9p3GdeSe4IFlP6G8JMa7o7lXvnz3GFKzPxzJdPfGK"
+        crossorigin="anonymous"></script>
+
+    <title>Login #2</title>
+    <script src="https://js.yoco.com/sdk/v1/yoco-sdk-web.js"></script>
+    <style>
+        .error {
+            color: red;
+        }
+        .valid {
+            color: green;
+        }
+    </style>
+
+  </head>
+  <body>
+  
+
+  <div class="d-lg-flex half">
+    <div class="bg order-1 order-md-2"></div>
+    <div class="contents order-2 order-md-1">
+
+      <div class="container">
+        <div class="row align-items-center justify-content-center">
+          <div class="col-md-7">
+            <h3 style="align-content: center; justify-content: center; display: flex;"><strong>ToynBee Payment Platform</strong></h3>
+            <h4 style="align-content: center; justify-content: center; display: flex;">Make payment of R200 for:</h4>
+            <h4 style="align-content: center; justify-content: center; display: flex;"><strong>{{ name['name'] }} {{ name['surname'] }}</strong></h4>
+            <!-- <p class="mb-4">Type a student's name below</p> -->
+
+                    <form id="payment-form" method="post" action="/pay">
+                        <input type="text" name="amount" hidden value="200" style="margin-bottom: 2rem;" id="amount"><br>
+                        <input type="hidden" id="token" name="token" >
+                        <input type="hidden" name="name" value="{{ name['name'] }}">
+                        <input type="hidden" name="surname" value="{{ name['surname'] }}">
+                        <input type="hidden" name="studentId" value="{{ studentId }}">
+                        <!-- Add selector for send invoice -->
+                        <label for="sendInvoice">Send Invoice?</label>
+                        <input type="checkbox" id="sendInvoice" name="sendInvoice">
+                        <!-- Add email input field -->
+                        <div id="emailInput" style="display: none;">
+                            <label for="email">Email:</label>
+                            <input type="email" id="email" name="email">
+                            <span id="emailFeedback" class="error"></span>
+                        </div>
+                        <button type="button" class="btn btn-block btn-primary" id="payButton">Pay</button>
+                    </form>
+            
+                <script>
+                    document.addEventListener("DOMContentLoaded", function () {
+                        var yoco = new window.YocoSDK({
+                            publicKey: 'pk_test_ecf37800XBYZGrE7f5c4' // TEST
+                            {# publicKey: 'pk_live_042ac69aXBYZGrE2b0a4' // LIVE #}
+                        });
+            
+                        var payButton = document.getElementById('payButton');
+                        payButton.addEventListener('click', function () {
+                            var amountInCents = Math.floor(document.getElementById('amount').value * 100);
+                            yoco.showPopup({
+                                amountInCents: amountInCents,
+                                currency: 'ZAR',
+                                name: 'ToynBee Fees',
+                                callback: function (result) {
+                                    if (result.error) {
+                                        alert("Error: " + result.error.message);
+                                    } else {
+                                        document.getElementById('token').value = result.id;
+                                        document.getElementById('payment-form').submit();
+                                    }
+                                }
+                            });
+                        });
+                    });
+                </script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        // Hide email input by default
+        var emailInput = document.getElementById('emailInput');
+        emailInput.style.display = 'none';
+
+        // Event listener for checkbox change
+        var sendInvoiceCheckbox = document.getElementById('sendInvoice');
+        sendInvoiceCheckbox.addEventListener('change', function () {
+            if (sendInvoiceCheckbox.checked) {
+                emailInput.style.display = 'block'; // Show email input
+            } else {
+                emailInput.style.display = 'none'; // Hide email input
+            }
+        });
+    });
+</script>
+<script>
+    document.getElementById('email').addEventListener('input', function() {
+        var email = this.value;
+        var emailFeedback = document.getElementById('emailFeedback');
+        var emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
+        if (emailPattern.test(email)) {
+            emailFeedback.textContent = 'Valid email address.';
+            emailFeedback.classList.remove('error');
+            emailFeedback.classList.add('valid');
+        } else {
+            emailFeedback.textContent = 'Invalid email address.';
+            emailFeedback.classList.remove('valid');
+            emailFeedback.classList.add('error');
+        }
+    });
+</script>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    
+  </div>
+    
+  <script src="{{ url_for('static', filename='js/search.js') }}"></script>
+
+    <script src="static/assets/js/jquery-3.3.1.min.js"></script>
+    <script src="static/assets/js/popper.min.js"></script>
+    <script src="static/assets/js/bootstrap.min.js"></script>
+    <script src="static/assets/js/main.js"></script>
+    
+  </body>
+</html>

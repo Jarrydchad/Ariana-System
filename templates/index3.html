@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice</title>
+    <style>
+        /* Your CSS styles for the invoice */
+    </style>
+</head>
+<body>
+    <div id="invoiceContent">
+        <!-- Your invoice content goes here -->
+        <h1>Invoice</h1>
+        <p>Invoice Number: {{ invoice_number }}</p>
+        <p>Date: {{ date }}</p>
+        <p>Amount: {{ amount }}</p>
+    </div>
+    <button id="generatePdfButton">Generate PDF</button>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+    <script>
+        document.getElementById('generatePdfButton').addEventListener('click', function() {
+            // Generate PDF using jsPDF
+            var doc = new jsPDF();
+            doc.html(document.getElementById('invoiceContent'), {
+                callback: function(pdf) {
+                    // Convert PDF to blob
+                    var pdfBlob = pdf.output('blob');
+
+                    // Create a FormData object to send the PDF to the Flask backend
+                    var formData = new FormData();
+                    formData.append('pdf', pdfBlob, 'invoice.pdf');
+
+                    // Send PDF data to Flask backend
+                    fetch('/upload-pdf', {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => {
+                        if (response.ok) {
+                            console.log('PDF uploaded successfully');
+                        } else {
+                            console.error('Failed to upload PDF');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error uploading PDF:', error);
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>

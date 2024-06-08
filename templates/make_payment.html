@@ -1,0 +1,64 @@
+{% extends 'layout.html' %}
+  <script>
+    function disableButton() {
+    console.log("Button clicked!");
+    const submitButton = document.getElementById('submitButton');
+    submitButton.disabled = true;
+    submitButton.innerText = 'Processing...';
+}
+
+{% block content %}
+
+
+  </script>
+    <!-- End Navbar -->
+    <div class="container-fluid py-4">
+      <div class="row">
+        <div class="col-lg-8 col-md-10 mx-auto">
+          <div class="card mt-4">
+            <div class="card-header p-3">
+              <h5 class="mb-0">Receive Cash Payment</h5>
+            </div>
+            
+            <div class="card z-index-0 fadeIn3 fadeInBottom">
+              <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+
+              </div>
+              <div class="card-body">
+                <form role="form" action="/make_payment" method="post" class="text-start">
+                    <div class="input-group input-group-outline my-3">
+                <input type="text" id="learnerSearch" class="form-control" placeholder="Start typing...">
+              </div>
+              <div class="input-group input-group-outline my-3">
+                  <select id="learnerSelect" required name="studentId" class="form-control" style="display:none;"></select>
+              </div>
+
+                  <div class="input-group input-group-outline my-3">
+                    <!-- <label class="form-label">Name</label> -->
+                    <input type="text" required name="amount" class="form-control" placeholder="Amount" pattern="\d*" title="Please enter only numbers" oninput="this.value=this.value.replace(/[^0-9]/g,'');">
+                  </div>
+ 
+
+
+                  {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                      {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">
+                          {{ message }}
+                        </div>
+                      {% endfor %}
+                    {% endif %}
+                  {% endwith %}
+
+                    <button type="submit" id="submitButton" class="btn bg-gradient-primary w-100 my-4 mb-2">Make Payment</button>
+                </form>
+              </div>
+            </div>
+
+
+          </div>
+        </div>
+      </div>
+      
+      <script src="{{ url_for('static', filename='js/search.js') }}"></script>
+      {% endblock %}

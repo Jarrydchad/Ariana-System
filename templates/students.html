@@ -1,0 +1,73 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+
+
+    <div class="col-lg-8 col-md-6 mb-md-0 mb-4">
+
+        <table id="example" class="table table-striped" style="width:100%">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Surname</th>
+<!--                    <th>Grade</th>-->
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for learner in students %}
+                <tr>
+                    <td>{{ learner[1] }}</td>
+                    <td>{{ learner[2]}}</td>
+<!--                    <td>{{ learner['grade']}}</td>-->
+
+                    <td>
+                        {% if learner['total_amount'] != 0 %}
+                        <a href="/admin/student_payments/{{ learner[0] }}">View payments</a>  |
+                        {% endif %}
+                        <a href="#" onclick="confirmDelete('{{ learner[0] }}')">
+                            <img src="static/img/delete_icon.png" height="25" width="25" alt="">
+                        </a>
+                    </td>
+
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr>
+                    <th>Name</th>
+                    <th>Surname</th>
+<!--                    <th>Grade</th>-->
+                    <th></th>
+                </tr>
+            </tfoot>
+        </table>
+
+    </div>
+    <div style="width: 50%;">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="alert alert-{{ category }}">
+                {{ message }}
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+    </div>
+
+<script>
+    new DataTable('#example');
+</script>
+
+<script>
+    function confirmDelete(learnerId) {
+        if (confirm('Are you sure you want to delete this learner? THIS CANNOT BE UNDONE!')) {
+            console.log('student id: ', learnerId)
+            window.location.href = "/delete_student/" + learnerId;
+        }
+    }
+</script>
+
+
+{% endblock %}
