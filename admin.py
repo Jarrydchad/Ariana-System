@@ -152,12 +152,6 @@ def get_latest_payments():
 import mysql.connector
 from datetime import datetime
 
-db_config = {
-    'host': 'localhost',
-    'user': 'root',
-    'password': 'jcp@S4123',
-    'database': 'ballet'
-}
 
 def get_total_fees_per_month():
     try:
