@@ -5,7 +5,7 @@ from datetime import datetime
 from urllib.parse import urlparse
 
 import mysql
-from flask import Blueprint, render_template, jsonify
+from flask import Blueprint, flash, render_template, jsonify, request, redirect, url_for
 
 admin_bp = Blueprint('admin', __name__)
 
@@ -93,6 +93,7 @@ def dashboard():
 
         cursor.close()
         connection.close()
+        print(f'latest: {latest_payments}')
 
         return render_template('dashboard.html',
                                active_page='dashboard',
@@ -106,6 +107,8 @@ def dashboard():
 
     except mysql.connector.Error as error:
         logger.error(f'Database error: {error}')
+        if connection and connection.is_connected():
+            connection.close()
         return render_template('error.html', message=str(error))
 
 
@@ -117,6 +120,32 @@ def student_payments(student_id):
 
     return render_template('student_payments.html', payments=payments)
 
+
+@admin_bp.route('/admin/edit_student/<int:student_id>', methods=['GET', 'POST'])
+def edit_student(student_id):
+    connection = mysql.connector.connect(**db_config)
+    cursor = connection.cursor()
+    cursor.execute("SELECT name, surname, studentId FROM students WHERE studentId = %s", (student_id,))
+    student = cursor.fetchone()
+    if request.method == 'POST':
+        print('hiiiii')
+        name = request.form['name']
+        surname = request.form['surname']
+        cursor.execute("UPDATE students SET name = %s, surname = %s WHERE studentId = %s", (name, surname, student_id))
+        connection.commit()
+        flash("Student updated successfully!", "success")
+        cursor.close()
+        connection.close()
+        return redirect(url_for('admin.edit_student', student_id=student_id))
+
+        #        update_query = """UPDATE users SET username = %s, email = %s WHERE id = %s"""
+
+    
+    cursor.close()
+    connection.close()
+
+    
+    return render_template('edit_student.html', student=student)
 
 def get_latest_payments():
     try:
@@ -147,7 +176,9 @@ def get_latest_payments():
 
     except mysql.connector.Error as error:
         logger.error(f'Database error: {error}')
-        return []
+    finally:
+        if connection and connection.is_connected():
+            connection.close()
 
 import mysql.connector
 from datetime import datetime
@@ -204,6 +235,8 @@ def get_total_fees_per_month():
 
     except mysql.connector.Error as error:
         print(f'Database error: {error}')
+        if connection and connection.is_connected():
+            connection.close()
         return [], []
 
 # Testing the function
@@ -261,6 +294,8 @@ def get_students_paid_per_month():
 
     except mysql.connector.Error as error:
         print(f'Database error: {error}')
+        if connection and connection.is_connected():
+            connection.close()
         return [], []
 
 # Testing the function
@@ -318,5 +353,7 @@ def get_payments_for_student(student_id):
         return student_details
 
     except mysql.connector.Error as error:
+        if connection and connection.is_connected():
+            connection.close()
         return {'error': str(error)}
 

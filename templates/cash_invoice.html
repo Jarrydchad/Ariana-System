@@ -87,8 +87,8 @@
                             </td>
 
                             <td>
-                                Invoice #: {{ data.id }}<br>
-                                Status: {{ data.status }} <br>
+                                Invoice #: {{ invoice_no }}<br>
+                                Status: Paid <br>
                                 Date: {{ date }}
                             </td>
                         </tr>
@@ -123,8 +123,8 @@
 
             <tr class="details">
 
-                <td>Card payment</td>
-                <td>{{ data.source.brand }} ending in {{ data.source.maskedCard[-4:] }}</td>
+                <td>Cash payment</td>
+                <td>Cash</td>
 
             </tr>
 
@@ -137,13 +137,13 @@
             <tr class="item last">
                 <td>Monthly fees</td>
 
-                <td>R {{ data.amountInCents / 100 }}</td>
+                <td>R {{ amount }}</td>
             </tr>
 
             <tr class="total">
                 <td></td>
 
-                <td>Total: R {{ data.amountInCents / 100 }}</td>
+                <td>Total: R {{ amount }}</td>
             </tr>
         </table>
     </div>

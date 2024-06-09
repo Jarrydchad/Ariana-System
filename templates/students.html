@@ -22,9 +22,8 @@
 <!--                    <td>{{ learner['grade']}}</td>-->
 
                     <td>
-                        {% if learner['total_amount'] != 0 %}
                         <a href="/admin/student_payments/{{ learner[0] }}">View payments</a>  |
-                        {% endif %}
+                        <a href="/admin/edit_student/{{ learner[0] }}">Edit student</a>  |
                         <a href="#" onclick="confirmDelete('{{ learner[0] }}')">
                             <img src="static/img/delete_icon.png" height="25" width="25" alt="">
                         </a>

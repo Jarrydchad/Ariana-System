@@ -43,12 +43,12 @@
         <div class="row align-items-center justify-content-center">
           <div class="col-md-7">
             <h3 style="align-content: center; justify-content: center; display: flex;"><strong>ToynBee Payment Platform</strong></h3>
-            <h4 style="align-content: center; justify-content: center; display: flex;">Make payment of R200 for:</h4>
+            <h4 style="align-content: center; justify-content: center; display: flex;">Make payment of R{{ fees }} for:</h4>
             <h4 style="align-content: center; justify-content: center; display: flex;"><strong>{{ name['name'] }} {{ name['surname'] }}</strong></h4>
             <!-- <p class="mb-4">Type a student's name below</p> -->
 
                     <form id="payment-form" method="post" action="/pay">
-                        <input type="text" name="amount" hidden value="20" style="margin-bottom: 2rem;" id="amount"><br>
+                        <input type="text" name="amount" hidden value="{{ fees }}" style="margin-bottom: 2rem;" id="amount"><br>
                         <input type="hidden" id="token" name="token" >
                         <input type="hidden" name="name" value="{{ name['name'] }}">
                         <input type="hidden" name="surname" value="{{ name['surname'] }}">
@@ -68,8 +68,8 @@
                 <script>
                     document.addEventListener("DOMContentLoaded", function () {
                         var yoco = new window.YocoSDK({
-                            {# publicKey: 'pk_test_ecf37800XBYZGrE7f5c4' // TEST #}
-                            publicKey: 'pk_live_042ac69aXBYZGrE2b0a4' // LIVE
+                            publicKey: 'pk_test_ecf37800XBYZGrE7f5c4' // TEST
+                            {# publicKey: 'pk_live_042ac69aXBYZGrE2b0a4' // LIVE #}
                         });
             
                         var payButton = document.getElementById('payButton');

@@ -1,0 +1,132 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+
+    <!-- End Navbar -->
+    <div class="container-fluid py-4">
+      <div class="row">
+        <div class="col-lg-8 col-md-10 mx-auto">
+          <div class="card mt-4">
+            <div class="card-header p-3">
+              <h5 class="mb-0">Edit Student</h5>
+            </div>
+            
+            <div class="card z-index-0 fadeIn3 fadeInBottom">
+              <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+              </div>
+              <div class="card-body">
+                <form role="form" action="/admin/edit_student/{{ student[2] }}" method="post" enctype="multipart/form-data" class="text-start">
+                  <div class="input-group input-group-outline my-3">
+                    <label for="name" class="form-label-fixed" style="width: 6rem;">Name: </label>
+                    <input type="text" name="name" value="{{ student[0] }}" class="form-control" >
+                  </div>
+                  <div class="input-group input-group-outline mb-3">
+                    <label for="fees" class="form-label-fixed" style="width: 6rem;">Surname: </label>
+                    <input type="text" name="surname" value="{{ student[1] }}" class="form-control">
+                  </div>
+                  
+                  <!-- <div class="input-group input-group-outline mb-3">
+                    <label for="fees" class="form-label-fixed">Address</label>
+                    <input type="text" required name="address" value="{{ student['address'] }}" class="form-control" placeholder="Address">
+                  </div> -->
+
+
+                  <div class="text-center">
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                      {% if messages %}
+                        {% for category, message in messages %}
+                          <div class="alert alert-{{ category }}">
+                            {{ message }}
+                          </div>
+                        {% endfor %}
+                      {% endif %}
+                    {% endwith %}
+
+                    <button type="submit" class="btn bg-gradient-primary w-100 my-4 mb-2">Update</button>
+                  </div>
+                  <!-- <p class="mt-4 text-sm text-center">
+                    Don't have an account?
+                    <a href="static/pages/sign-up.html" class="text-primary text-gradient font-weight-bold">Sign up</a>
+                  </p> -->
+                </form>
+              </div>
+            </div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="position-fixed bottom-1 end-1 z-index-2">
+        <div class="toast fade hide p-2 bg-white" role="alert" aria-live="assertive" id="successToast" aria-atomic="true">
+          <div class="toast-header border-0">
+            <i class="material-icons text-success me-2">
+        check
+      </i>
+            <span class="me-auto font-weight-bold">Material Dashboard </span>
+            <small class="text-body">11 mins ago</small>
+            <i class="fas fa-times text-md ms-3 cursor-pointer" data-bs-dismiss="toast" aria-label="Close"></i>
+          </div>
+          <hr class="horizontal dark m-0">
+          <div class="toast-body">
+            Hello, world! This is a notification message.
+          </div>
+        </div>
+        <div class="toast fade hide p-2 mt-2 bg-gradient-info" role="alert" aria-live="assertive" id="infoToast" aria-atomic="true">
+          <div class="toast-header bg-transparent border-0">
+            <i class="material-icons text-white me-2">
+        notifications
+      </i>
+            <span class="me-auto text-white font-weight-bold">Material Dashboard </span>
+            <small class="text-white">11 mins ago</small>
+            <i class="fas fa-times text-md text-white ms-3 cursor-pointer" data-bs-dismiss="toast" aria-label="Close"></i>
+          </div>
+          <hr class="horizontal light m-0">
+          <div class="toast-body text-white">
+            Hello, world! This is a notification message.
+          </div>
+        </div>
+        <div class="toast fade hide p-2 mt-2 bg-white" role="alert" aria-live="assertive" id="warningToast" aria-atomic="true">
+          <div class="toast-header border-0">
+            <i class="material-icons text-warning me-2">
+        travel_explore
+      </i>
+            <span class="me-auto font-weight-bold">Material Dashboard </span>
+            <small class="text-body">11 mins ago</small>
+            <i class="fas fa-times text-md ms-3 cursor-pointer" data-bs-dismiss="toast" aria-label="Close"></i>
+          </div>
+          <hr class="horizontal dark m-0">
+          <div class="toast-body">
+            Hello, world! This is a notification message.
+          </div>
+        </div>
+        <div class="toast fade hide p-2 mt-2 bg-white" role="alert" aria-live="assertive" id="dangerToast" aria-atomic="true">
+          <div class="toast-header border-0">
+            <i class="material-icons text-danger me-2">
+        campaign
+      </i>
+            <span class="me-auto text-gradient text-danger font-weight-bold">Material Dashboard </span>
+            <small class="text-body">11 mins ago</small>
+            <i class="fas fa-times text-md ms-3 cursor-pointer" data-bs-dismiss="toast" aria-label="Close"></i>
+          </div>
+          <hr class="horizontal dark m-0">
+          <div class="toast-body">
+            Hello, world! This is a notification message.
+          </div>
+        </div>
+      </div>
+
+      <script>
+        document.getElementById('clearImageButton').addEventListener('click', function() {
+            document.getElementById('imageInput').value = "";
+            var clearImageButton = document.getElementById('clearImageButton');
+            clearImageButton.style.display = 'none';
+        });
+
+        document.getElementById('imageInput').addEventListener('change', function() {
+            var clearImageButton = document.getElementById('clearImageButton');
+            clearImageButton.style.display = this.value ? 'inline-block' : 'none';
+            console.log(this.value);
+        });
+        </script>
+      
+      {% endblock %}

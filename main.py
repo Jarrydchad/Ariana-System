@@ -45,8 +45,8 @@ app.secret_key = 'super secret key'
 app.register_blueprint(admin_bp)
 
 # Replace with your actual test secret key
-# YOCO_SECRET_KEY = 'sk_test_d84e2b4fK1op2aR54bd4230b03e2' ### TESTING SECRET KEY ###
-YOCO_SECRET_KEY = 'sk_live_2c8a989aK1op2aR989746c895c77' ### LIVE SECRET KEY ###
+YOCO_SECRET_KEY = 'sk_test_d84e2b4fK1op2aR54bd4230b03e2' ### TESTING SECRET KEY ###
+# YOCO_SECRET_KEY = 'sk_live_2c8a989aK1op2aR989746c895c77' ### LIVE SECRET KEY ###
 
 # Retrieve ClearDB URL from environment variable
 clear_db_url = os.getenv('CLEARDB_DATABASE_URL')
@@ -100,47 +100,90 @@ def index():
 def payment():
     studentId = request.args.get('name')
     print('in here')
-    # Connect to the database
-    connection = mysql.connector.connect(**db_config)
-    cursor = connection.cursor()
+    connection = None
+    cursor = None
+    students = None
 
-    # Fetch students for the selected school from the database
-    cursor.execute("SELECT name, surname FROM students WHERE studentId = %s", (studentId,))
-    student = cursor.fetchone()
-    students = {'name': student[0], 'surname': student[1]} if student else None
+    try:
+        connection = get_db_connection()
+        cursor = connection.cursor()
 
-    print(f'student: {students}')
-    # return jsonify(students)
+        # Fetch student from the database
+        cursor.execute("SELECT name, surname, schoolId FROM students WHERE studentId = %s", (studentId,))
+        student = cursor.fetchone()
+        students = {'name': student[0], 'surname': student[1], 'schoolId': student[2]} if student else None
+        print(students['schoolId'])
 
-    return render_template('pay.html', name=students, studentId=studentId)
+        cursor.execute("SELECT fees FROM school WHERE schoolId = %s", (students['schoolId'],))
+        fees = cursor.fetchone()[0]
+
+        print(f'student: {students}')
+    except mysql.connector.Error as err:
+        app.logger.error(f"Database error: {err}")
+        return "An error occurred while accessing the database.", 500
+    except Exception as e:
+        app.logger.error(f"Unexpected error: {e}")
+        return "An unexpected error occurred.", 500
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
+
+    return render_template('pay.html', name=students, studentId=studentId, fees=fees)
+
 
 @app.route('/make_payment', methods=['GET', 'POST'])
 def make_payment():
     if request.method == 'POST':
         amount = int(request.form['amount'])
         studentId = request.form['studentId']
+        email = request.form['email']
+
         date = datetime.datetime.now()
 
         print(f'studentId: {studentId}, amount: {amount}, date: {date}')
-        connection = get_db_connection()
-        if connection:
-            cursor= connection.cursor()
+        connection = None
+        cursor = None
+
+        try:
+            connection = get_db_connection()
+            cursor = connection.cursor()
             cursor.execute("SELECT name, surname FROM students WHERE studentId = %s", (studentId,))
             student = cursor.fetchone()
-            students = {'name': student[0], 'surname': student[1]} if student else None
-            sendReceivedPaymentEmail(students.get('name'), students.get('surname'), amount)
 
-            cursor = connection.cursor()
-            cursor.execute("INSERT INTO payments (amount, date, studentId) VALUES (%s, %s, %s)",
-                           (amount, date, studentId))
-            connection.commit()
-            cursor.close()
-            connection.close()
+            if student:
+                students = {'name': student[0], 'surname': student[1]}
+                sendReceivedPaymentEmail(students.get('name'), students.get('surname'), amount)
 
-        flash("Cash payment made successfully!", "success")
+                cursor.execute("INSERT INTO payments (amount, date, studentId) VALUES (%s, %s, %s)",
+                               (amount, date, studentId))
+                connection.commit()
+
+                cursor.execute("SELECT paymentId FROM payments WHERE studentId = %s ORDER BY date DESC LIMIT 1", (studentId,))
+                invoice_no = cursor.fetchone()
+
+                if email != '':
+                    invoice = generate_cash_invoice(amount, student[0], student[1], email, date, invoice_no)
+                    send_invoice('', invoice, email)
+
+                flash("Cash payment made successfully!", "success")
+            else:
+                flash("Student not found!", "danger")
+
+        except mysql.connector.Error as err:
+            app.logger.error(f"Database error: {err}")
+            flash("An error occurred while accessing the database.", "danger")
+        except Exception as e:
+            app.logger.error(f"Unexpected error: {e}")
+            flash("An unexpected error occurred.", "danger")
+        finally:
+            if cursor:
+                cursor.close()
+            if connection:
+                connection.close()
+
         return redirect(url_for('make_payment'))
-
-
 
     return render_template('make_payment.html', active_page='payment')
 
@@ -208,53 +251,63 @@ def get_students(school_id):
             cursor.close()
             connection.close()
 
-
-
-
-
 @app.route('/schools')
 def schools():
 
     return render_template('schools.html')
 
-@app.route('/test')
-def test():
-
-    return render_template('test.html')
 
 @app.route('/search', methods=['POST'])
 def search():
     print('searching...')
-
-    # school_id = session['school_id']
     term = request.form.get('term')
+    connection = None
+    cursor = None
 
-    # Query the learners table based on the search term
-    # cursor = db.cursor()
-    # connection = mysql.connector.connect(**db_config)
-    connection = get_db_connection()
-    cursor = connection.cursor()
-    query = f"SELECT studentId, name, surname FROM students WHERE name LIKE %s OR surname LIKE %s"
-    cursor.execute(query, ('%' + term + '%', '%' + term + '%'))
-    results = cursor.fetchall()
-    print(results)
+    try:
+        connection = get_db_connection()
+        cursor = connection.cursor()
+        query = "SELECT studentId, name, surname FROM students WHERE name LIKE %s OR surname LIKE %s"
+        cursor.execute(query, ('%' + term + '%', '%' + term + '%'))
+        results = cursor.fetchall()
+        print(results)
 
-    # Build HTML for search results
-    html = ""
-    for studentId, name, surname in results:
-        html += f'<option value="{studentId}">{name} {surname}</option>'
+        # Build HTML for search results
+        html = ""
+        for studentId, name, surname in results:
+            html += f'<option value="{studentId}">{name} {surname}</option>'
 
-    return html
+        return html
+
+    except mysql.connector.Error as err:
+        app.logger.error(f"Database error: {err}")
+        return "Database connection failed", 500
+
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
 
 
 @app.route('/students')
 def students():
 
-    # cursor = mysql.connection.cursor()
-    connection = get_db_connection()
-    cursor = connection.cursor()
-    cursor.execute(f"SELECT * FROM students")
-    students = cursor.fetchall()
+    try:
+        connection = get_db_connection()
+        cursor = connection.cursor()
+        cursor.execute(f"SELECT * FROM students")
+        students = cursor.fetchall()
+        cursor.close()
+        connection.close()
+    except Error as e:
+        print(f"Error: {e}")
+        flash("An error occurred while fetching the student.", "danger")
+        return redirect(url_for('students'))
+
+    finally:
+        if connection and connection.is_connected():
+            connection.close()
 
     return render_template('students.html', students=students, active_page='students')
 
@@ -382,7 +435,10 @@ def pay():
                 connection.close()
 
             sendReceivedPaymentEmail(name, surname, amount/100)
-            send_invoice(response_data['source']['id'], invoice_pdf, email)
+            if email != '':
+                send_invoice(response_data['source']['id'], invoice_pdf, email)
+            else:
+                print('email was empty')
             return render_template('success.html', data=response_data)
         else:
             error_message = response_data.get('message', 'Unknown error')
@@ -391,6 +447,9 @@ def pay():
     except Exception as e:
         print(f"Exception occurred: {e}")
         return render_template('error.html', error_message=str(e))
+    finally:
+        if connection and connection.is_connected():
+            connection.close()
 
 
 
@@ -408,9 +467,21 @@ def generate_invoice(data, name, surname, email, date):
     rendered = render_template('invoice.html', data=data, company_logo=img_base64, company_name=COMPANY_NAME, name=name, surname=surname, email=email, date=date)
     pdf = pdfkit.from_string(rendered, False, configuration=config, options={"enable-local-file-access": ""})
 
-    # pdf_filename = 'invoice.pdf'
-    # with open(pdf_filename, 'wb') as f:
-    #     f.write(pdf)
+    return pdf
+
+def generate_cash_invoice(amount, name, surname, email, date, invoice_no):
+    with open('static/img/logo.jpg', 'rb') as f:
+        img_data = f.read()
+        img_base64 = base64.b64encode(img_data).decode()
+
+    datetime_obj = datetime.strptime(date, '%Y-%m-%d %H:%M:%S.%f')
+    formatted_datetime = datetime_obj.strftime('%Y-%m-%d %I:%M %p')
+
+    static_folder = current_app.static_folder
+    static_files = os.listdir(os.path.join(static_folder, 'img'))
+
+    rendered = render_template('cash_invoice.html', company_logo=img_base64, company_name=COMPANY_NAME, name=name, surname=surname, email=email, date=formatted_datetime, invoice_no=invoice_no, amount=amount)
+    pdf = pdfkit.from_string(rendered, False, configuration=config, options={"enable-local-file-access": ""})
 
     return pdf
 
@@ -420,9 +491,9 @@ def send_invoice(card_id, invoice_pdf, email):
     msg = MIMEMultipart()
     msg['From'] = formataddr((COMPANY_NAME, COMPANY_EMAIL))
     msg['To'] = recipient_email
-    msg['Subject'] = 'Invoice for Your Payment'
+    msg['Subject'] = 'Receipt for Your Payment'
 
-    body = 'Dear Customer,\n\nThank you for your payment. Please find attached the invoice for your recent transaction.\n\nBest regards,\nToynBee Dance Academy'
+    body = 'Dear Customer,\n\nThank you for your payment. Please find attached the receipt for your recent transaction.\n\nBest regards,\nToynBee Dance Academy'
     msg.attach(MIMEText(body, 'plain'))
 
     part = MIMEApplication(invoice_pdf, Name='invoice.pdf')
@@ -441,7 +512,7 @@ def sendReceivedPaymentEmail(name, surname, amount):
         self_email = 'jarrydchad@gmail.com' # use ariana email
         notification_msg = MIMEMultipart()
         notification_msg['From'] = formataddr((COMPANY_NAME, COMPANY_EMAIL))
-        notification_msg['To'] = self_email
+        notification_msg['To'] = [self_email, 'arianago@live.co.uk']
         notification_msg['Subject'] = 'Client Payment Received'
 
         notification_body = (f'Client Payment Details:\n\n'
@@ -452,7 +523,7 @@ def sendReceivedPaymentEmail(name, surname, amount):
         with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
             server.starttls()
             server.login(COMPANY_EMAIL, '@Cj2022!')
-            server.sendmail(COMPANY_EMAIL, 'jarrydchad@gmail.com', notification_msg.as_string())
+            server.sendmail(COMPANY_EMAIL, ['jarrydchad@gmail.com', 'arianago@live.co.uk'], notification_msg.as_string())
     except Error as e:
         logging.error(f'Unable to send email: {e}')
 
@@ -482,7 +553,7 @@ def print_message_and_send_email(message, target_day, recipients):
             subject = "Payment reminder"
             send_email(subject, message, recipients)
             break
-        time.sleep(1)
+        time.sleep(100)
 
 
 def stop_server():
@@ -493,11 +564,11 @@ def stop_server():
 
 
 def run_script():
-    target_day = 6
-    message = "Hello! This is a payment reminder. You can do so using this link ..."
-    recipients = ["jarrydchad@gmail.com", "celinebrown002@gmail.com"]  # Add your recipient email addresses
+    target_day = 10
+    message = "Hello! This is a payment reminder. You can do so using this link: www.toynbeedanceacademy.co.za"
+    recipients = ["jarrydchad@gmail.com"]  # Add your recipient email addresses
     print(message)
-    # print_message_and_send_email(message, target_day, recipients)
+    print_message_and_send_email(message, target_day, recipients)
 
 if __name__ == '__main__':
     script_thread = threading.Thread(target=run_script)
