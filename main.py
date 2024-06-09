@@ -66,31 +66,25 @@ if 'DYNO' in os.environ:  # Check if running on Heroku
     }
 else:
     path_wkhtmltopdf = r'C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe'  # Local path for development
-    # db_config = {
-    #     'host': 'localhost',
-    #     'user': 'root',
-    #     'password': 'jcp@S4123',
-    #     'database': 'ballet'
-    # }
+    db_config = {
+        'host': 'localhost',
+        'user': 'root',
+        'password': 'jcp@S4123',
+        'database': 'ballet'
+    }
 
-db_config = {
-    'host': url.hostname,
-    'user': url.username,
-    'password': url.password,
-    'database': url.path[1:],  # Removing the leading '/' from the path
-    'port': url.port or 3306  # Use default MySQL port if not specified
-}
+
 
 config = pdfkit.configuration(wkhtmltopdf=path_wkhtmltopdf)
 
 # mysql = MySQL(app)
 
-db_config = {
-    'host': 'localhost',
-    'user': 'root',
-    'password': 'jcp@S4123',
-    'database': 'ballet'
-}
+# db_config = {
+#     'host': 'localhost',
+#     'user': 'root',
+#     'password': 'jcp@S4123',
+#     'database': 'ballet'
+# }
 # connection = mysql.connector.connect(**db_config)
 
 @app.route('/', methods=['GET', 'POST'])
