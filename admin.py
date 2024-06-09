@@ -1,18 +1,44 @@
 # admin.py
 import logging
+import os
 from datetime import datetime
+from urllib.parse import urlparse
 
 import mysql
 from flask import Blueprint, render_template, jsonify
 
 admin_bp = Blueprint('admin', __name__)
 
-db_config = {
-    'host': 'localhost',
-    'user': 'root',
-    'password': 'jcp@S4123',
-    'database': 'ballet'
-}
+# db_config = {
+#     'host': 'localhost',
+#     'user': 'root',
+#     'password': 'jcp@S4123',
+#     'database': 'ballet'
+# }
+
+# Retrieve ClearDB URL from environment variable
+clear_db_url = os.getenv('CLEARDB_DATABASE_URL')
+
+# Parse the ClearDB URL
+url = urlparse(clear_db_url)
+
+if 'DYNO' in os.environ:  # Check if running on Heroku
+    path_wkhtmltopdf = '/app/bin/wkhtmltopdf'
+    db_config = {
+        'host': url.hostname,
+        'user': url.username,
+        'password': url.password,
+        'database': url.path[1:],  # Removing the leading '/' from the path
+        'port': url.port or 3306  # Use default MySQL port if not specified
+    }
+else:
+    path_wkhtmltopdf = r'C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe'  # Local path for development
+    db_config = {
+        'host': 'localhost',
+        'user': 'root',
+        'password': 'jcp@S4123',
+        'database': 'ballet'
+    }
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
