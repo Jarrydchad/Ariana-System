@@ -49,7 +49,7 @@ app.register_blueprint(admin_bp)
 YOCO_SECRET_KEY = 'sk_live_2c8a989aK1op2aR989746c895c77' ### LIVE SECRET KEY ###
 
 # Retrieve ClearDB URL from environment variable
-clear_db_url = os.getenv('mysql://b87a525394c628:de05cc1c@us-cluster-east-01.k8s.cleardb.net/heroku_ff6e903f110944b?reconnect=true')
+clear_db_url = os.getenv('CLEARDB_DATABASE_URL')
 
 # Parse the ClearDB URL
 url = urlparse(clear_db_url)
