@@ -9,7 +9,7 @@ from flask import Flask, render_template, request, redirect, url_for, flash, jso
 import requests
 import hashlib
 import os
-from urllib.parse import urlencode
+from urllib.parse import urlencode, urlparse
 from flask_mysqldb import MySQL
 import mysql.connector
 from mysql.connector import Error
@@ -45,15 +45,33 @@ app.secret_key = 'super secret key'
 app.register_blueprint(admin_bp)
 
 # Replace with your actual test secret key
-YOCO_SECRET_KEY = 'sk_test_d84e2b4fK1op2aR54bd4230b03e2' ### TESTING SECRET KEY ###
-# YOCO_SECRET_KEY = 'sk_live_2c8a989aK1op2aR989746c895c77' ### LIVE SECRET KEY ###
+# YOCO_SECRET_KEY = 'sk_test_d84e2b4fK1op2aR54bd4230b03e2' ### TESTING SECRET KEY ###
+YOCO_SECRET_KEY = 'sk_live_2c8a989aK1op2aR989746c895c77' ### LIVE SECRET KEY ###
 
+# Retrieve ClearDB URL from environment variable
+clear_db_url = os.getenv('mysql://b87a525394c628:de05cc1c@us-cluster-east-01.k8s.cleardb.net/heroku_ff6e903f110944b?reconnect=true')
+
+# Parse the ClearDB URL
+url = urlparse(clear_db_url)
 
 # config = pdfkit.configuration(wkhtmltopdf='C:\\Program Files\\wkhtmltopdf\\bin\\wkhtmltopdf.exe')
 if 'DYNO' in os.environ:  # Check if running on Heroku
     path_wkhtmltopdf = '/app/bin/wkhtmltopdf'
+    db_config = {
+        'host': url.hostname,
+        'user': url.username,
+        'password': url.password,
+        'database': url.path[1:],  # Removing the leading '/' from the path
+        'port': url.port or 3306  # Use default MySQL port if not specified
+    }
 else:
     path_wkhtmltopdf = r'C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe'  # Local path for development
+    db_config = {
+        'host': 'localhost',
+        'user': 'root',
+        'password': 'jcp@S4123',
+        'database': 'ballet'
+    }
 
 config = pdfkit.configuration(wkhtmltopdf=path_wkhtmltopdf)
 
