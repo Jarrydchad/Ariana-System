@@ -45,8 +45,8 @@ app.secret_key = 'super secret key'
 app.register_blueprint(admin_bp)
 
 # Replace with your actual test secret key
-YOCO_SECRET_KEY = 'sk_test_d84e2b4fK1op2aR54bd4230b03e2' ### TESTING SECRET KEY ###
-# YOCO_SECRET_KEY = 'sk_live_2c8a989aK1op2aR989746c895c77' ### LIVE SECRET KEY ###
+# YOCO_SECRET_KEY = 'sk_test_d84e2b4fK1op2aR54bd4230b03e2' ### TESTING SECRET KEY ###
+YOCO_SECRET_KEY = 'sk_live_2c8a989aK1op2aR989746c895c77' ### LIVE SECRET KEY ###
 
 # Retrieve ClearDB URL from environment variable
 clear_db_url = os.getenv('CLEARDB_DATABASE_URL')
