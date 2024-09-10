@@ -45,8 +45,8 @@ app.secret_key = 'super secret key'
 app.register_blueprint(admin_bp)
 
 # Replace with your actual test secret key
-# YOCO_SECRET_KEY = 'sk_test_d84e2b4fK1op2aR54bd4230b03e2' ### TESTING SECRET KEY ###
-YOCO_SECRET_KEY = 'sk_live_2c8a989aK1op2aR989746c895c77' ### LIVE SECRET KEY ###
+YOCO_SECRET_KEY = 'sk_test_d84e2b4fK1op2aR54bd4230b03e2' ### TESTING SECRET KEY ###
+# YOCO_SECRET_KEY = 'sk_live_2c8a989aK1op2aR989746c895c77' ### LIVE SECRET KEY ###
 
 # Retrieve ClearDB URL from environment variable
 clear_db_url = os.getenv('CLEARDB_DATABASE_URL')
@@ -55,22 +55,42 @@ clear_db_url = os.getenv('CLEARDB_DATABASE_URL')
 url = urlparse(clear_db_url)
 
 # config = pdfkit.configuration(wkhtmltopdf='C:\\Program Files\\wkhtmltopdf\\bin\\wkhtmltopdf.exe')
-if 'DYNO' in os.environ:  # Check if running on Heroku
-    path_wkhtmltopdf = '/app/bin/wkhtmltopdf'
+# if 'DYNO' in os.environ:  # Check if running on Heroku
+#     path_wkhtmltopdf = '/app/bin/wkhtmltopdf'
+#     db_config = {
+#         'host': url.hostname,
+#         'user': url.username,
+#         'password': url.password,
+#         'database': url.path[1:],  # Removing the leading '/' from the path
+#         'port': url.port or 3306  # Use default MySQL port if not specified
+#     }
+# else:
+#     path_wkhtmltopdf = r'C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe'  # Local path for development
+#     db_config = {
+#         'host': 'localhost',
+#         'user': 'root',
+#         'password': 'jcp@S4123',
+#         'database': 'ariana'
+#     }
+
+if 'PYTHONANYWHERE_DOMAIN' in os.environ:  # Check if running on PythonAnywhere
+    path_wkhtmltopdf = '/home/jarrydchad/wkhtmltopdf/usr/local/bin/wkhtmltopdf'
     db_config = {
-        'host': url.hostname,
-        'user': url.username,
-        'password': url.password,
-        'database': url.path[1:],  # Removing the leading '/' from the path
-        'port': url.port or 3306  # Use default MySQL port if not specified
+        'host': 'jarrydchad.mysql.pythonanywhere-services.com',  # Replace with your PythonAnywhere MySQL host
+        'user': 'jarrydchad',  # Replace with your PythonAnywhere MySQL username
+        'password': '@Needforspeed1',  # Replace with your PythonAnywhere MySQL password
+        'database': 'jarrydchad$toynbee',  # Replace with your PythonAnywhere database name
+        'port': 3306  # Default MySQL port
     }
-else:
-    path_wkhtmltopdf = r'C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe'  # Local path for development
+else:  # Assume local development environment
+    # path_wkhtmltopdf = r'C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe'  # Local path for development
+    path_wkhtmltopdf = r'C:\Users\jarryd.pillay\Documents\wkhtmltopdf\wkhtmltox\bin\wkhtmltopdf.exe'  # Local path for development
     db_config = {
         'host': 'localhost',
         'user': 'root',
         'password': 'jcp@S4123',
-        'database': 'ballet'
+        'database': 'ariana',
+        'port': 3306  # Default MySQL port
     }
 
 
@@ -399,6 +419,9 @@ def pay():
         token = request.form['token']
         amount = int(float(request.form['amount']) * 100)  # Amount in cents
 
+        # Debugging the token and amount
+        print(f"Token: {token}, Amount: {amount}")
+
         headers = {
             'X-Auth-Secret-Key': YOCO_SECRET_KEY,
         }
@@ -408,6 +431,9 @@ def pay():
             'amountInCents': amount,
             'currency': 'ZAR'
         }
+
+        # Debugging the payload
+        print(f"Payload: {payload}")
 
         response = requests.post('https://online.yoco.com/v1/charges/', json=payload, headers=headers)
         response_data = response.json()
@@ -426,15 +452,22 @@ def pay():
             formatted_datetime = date.strftime('%Y-%m-%d %H:%M:%S')
             invoice_pdf = generate_invoice(response_data, name, surname, email, formatted_datetime)
 
+            print('here 1')
             connection = get_db_connection()
+            print('here 2')
             if connection:
+                print('here 3')
                 cursor = connection.cursor()
-                cursor.execute("INSERT INTO payments (amount, date, studentId) VALUES (%s, %s, %s)", (amount/100, formatted_datetime, studentId))
+                cursor.execute("INSERT INTO payments (amount, date, studentId) VALUES (%s, %s, %s)",
+                               (amount / 100, formatted_datetime, studentId))
                 connection.commit()
                 cursor.close()
                 connection.close()
+                print('here 4')
 
-            sendReceivedPaymentEmail(name, surname, amount/100)
+            sendReceivedPaymentEmail(name, surname, amount / 100)
+            print('here 5')
+
             if email != '':
                 send_invoice(response_data['source']['id'], invoice_pdf, email)
             else:
@@ -452,22 +485,133 @@ def pay():
             connection.close()
 
 
+# @app.route('/pay', methods=['POST'])
+# def pay():
+#     try:
+#         token = request.form['token']
+#         amount = int(float(request.form['amount']) * 100)  # Amount in cents
+#
+#         headers = {
+#             'X-Auth-Secret-Key': YOCO_SECRET_KEY,
+#         }
+#
+#         payload = {
+#             'token': token,
+#             'amountInCents': amount,
+#             'currency': 'ZAR'
+#         }
+#
+#         response = requests.post('https://online.yoco.com/v1/charges/', json=payload, headers=headers)
+#         response_data = response.json()
+#
+#         # Log the response for debugging
+#         print(response_data)
+#         print(response.status_code)
+#
+#         if response.status_code in [200, 201] and response_data.get('status') == 'successful':
+#             name = request.form['name']
+#             surname = request.form['surname']
+#             email = request.form['email']
+#             studentId = request.form['studentId']
+#             print(f'Student Id: {studentId}, name: {name} + {surname}')
+#             date = datetime.datetime.now()
+#             formatted_datetime = date.strftime('%Y-%m-%d %H:%M:%S')
+#             invoice_pdf = generate_invoice(response_data, name, surname, email, formatted_datetime)
+#
+#             connection = get_db_connection()
+#             if connection:
+#                 cursor = connection.cursor()
+#                 cursor.execute("INSERT INTO payments (amount, date, studentId) VALUES (%s, %s, %s)", (amount/100, formatted_datetime, studentId))
+#                 connection.commit()
+#                 cursor.close()
+#                 connection.close()
+#
+#             sendReceivedPaymentEmail(name, surname, amount/100)
+#             if email != '':
+#                 send_invoice(response_data['source']['id'], invoice_pdf, email)
+#             else:
+#                 print('email was empty')
+#             return render_template('success.html', data=response_data)
+#         else:
+#             error_message = response_data.get('message', 'Unknown error')
+#             return render_template('error.html', error_message=error_message, data=response_data)
+#
+#     except Exception as e:
+#         print(f"Exception occurred: {e}")
+#         return render_template('error.html', error_message=str(e))
+#     finally:
+#         if connection and connection.is_connected():
+#             connection.close()
+
 
 def generate_invoice(data, name, surname, email, date):
-    with open('static/img/logo.jpg', 'rb') as f:
-        img_data = f.read()
-        img_base64 = base64.b64encode(img_data).decode()
+    try:
+        # Read the logo image and convert to base64
+        try:
+            with open('static/img/logo.jpg', 'rb') as f:
+                img_data = f.read()
+                img_base64 = base64.b64encode(img_data).decode()
+        except FileNotFoundError as fnf_error:
+            print(f"Logo file not found: {fnf_error}")
+            raise  # Re-raise or handle if the logo is critical
 
-    static_folder = current_app.static_folder
-    static_files = os.listdir(os.path.join(static_folder, 'img'))
-    print('Static files:', static_files)
-    print(f'found the name: {name} {surname}')
-    print(f'logo: {COMPANY_LOGO_URL}')
+        # Access static folder and list files
+        try:
+            static_folder = current_app.static_folder
+            static_files = os.listdir(os.path.join(static_folder, 'img'))
+            print('Static files:', static_files)
+        except Exception as e:
+            print(f"Error accessing static folder: {e}")
+            raise  # Handle if this impacts functionality
 
-    rendered = render_template('invoice.html', data=data, company_logo=img_base64, company_name=COMPANY_NAME, name=name, surname=surname, email=email, date=date)
-    pdf = pdfkit.from_string(rendered, False, configuration=config, options={"enable-local-file-access": ""})
+        print(f'Found the name: {name} {surname}')
+        print(f'Logo URL: {COMPANY_LOGO_URL}')
 
-    return pdf
+        # Render the HTML template
+        rendered = render_template(
+            'invoice.html',
+            data=data,
+            company_logo=img_base64,
+            company_name=COMPANY_NAME,
+            name=name,
+            surname=surname,
+            email=email,
+            date=date
+        )
+
+        # Debugging rendered HTML before generating PDF
+        print(f"Rendered HTML (partial): {rendered[:500]}...")
+
+        # Generate the PDF from rendered HTML
+        try:
+            pdf = pdfkit.from_string(rendered, False, configuration=config, options={"enable-local-file-access": ""})
+        except Exception as pdf_error:
+            print(f"Error generating PDF: {pdf_error}")
+            raise  # Re-raise or handle PDF generation error
+
+        return pdf
+
+    except Exception as e:
+        print(f"An error occurred in generate_invoice: {e}")
+        # Handle or log the exception as needed
+        return None
+
+
+# def generate_invoice(data, name, surname, email, date):
+#     with open('static/img/logo.jpg', 'rb') as f:
+#         img_data = f.read()
+#         img_base64 = base64.b64encode(img_data).decode()
+#
+#     static_folder = current_app.static_folder
+#     static_files = os.listdir(os.path.join(static_folder, 'img'))
+#     print('Static files:', static_files)
+#     print(f'found the name: {name} {surname}')
+#     print(f'logo: {COMPANY_LOGO_URL}')
+#
+#     rendered = render_template('invoice.html', data=data, company_logo=img_base64, company_name=COMPANY_NAME, name=name, surname=surname, email=email, date=date)
+#     pdf = pdfkit.from_string(rendered, False, configuration=config, options={"enable-local-file-access": ""})
+#
+#     return pdf
 
 def generate_cash_invoice(amount, name, surname, email, date, invoice_no):
     with open('static/img/logo.jpg', 'rb') as f:
@@ -479,6 +623,8 @@ def generate_cash_invoice(amount, name, surname, email, date, invoice_no):
 
     static_folder = current_app.static_folder
     static_files = os.listdir(os.path.join(static_folder, 'img'))
+
+
 
     rendered = render_template('cash_invoice.html', company_logo=img_base64, company_name=COMPANY_NAME, name=name, surname=surname, email=email, date=formatted_datetime, invoice_no=invoice_no, amount=amount)
     pdf = pdfkit.from_string(rendered, False, configuration=config, options={"enable-local-file-access": ""})
@@ -509,23 +655,58 @@ def send_invoice(card_id, invoice_pdf, email):
 def sendReceivedPaymentEmail(name, surname, amount):
     # Send notification email to yourself
     try:
-        self_email = 'jarrydchad@gmail.com' # use ariana email
+        print('here 6')  # Debugging print
+        self_email = 'jarrydchad@gmail.com'  # Use Ariana email if needed
         notification_msg = MIMEMultipart()
         notification_msg['From'] = formataddr((COMPANY_NAME, COMPANY_EMAIL))
-        notification_msg['To'] = [self_email, 'arianago@live.co.uk']
+
+        # Combine email addresses into a string, comma-separated
+        recipients = ','.join([self_email])  # You can add more emails here
+
+        notification_msg['To'] = recipients
         notification_msg['Subject'] = 'Client Payment Received'
 
+        # Email body
         notification_body = (f'Client Payment Details:\n\n'
                              f'Name: {name} {surname}\n'
                              f'Amount: R{amount:.2f}\n')
         notification_msg.attach(MIMEText(notification_body, 'plain'))
 
+        # Sending the email
         with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
             server.starttls()
             server.login(COMPANY_EMAIL, '@Cj2022!')
-            server.sendmail(COMPANY_EMAIL, ['jarrydchad@gmail.com', 'arianago@live.co.uk'], notification_msg.as_string())
-    except Error as e:
+            server.sendmail(COMPANY_EMAIL, [self_email], notification_msg.as_string())
+
+    except smtplib.SMTPException as e:
         logging.error(f'Unable to send email: {e}')
+    except Exception as e:
+        logging.error(f'An unexpected error occurred: {e}')
+
+
+# def sendReceivedPaymentEmail(name, surname, amount):
+#     # Send notification email to yourself
+#     try:
+#         print('here 6')
+#         self_email = 'jarrydchad@gmail.com' # use ariana email
+#         notification_msg = MIMEMultipart()
+#         notification_msg['From'] = formataddr((COMPANY_NAME, COMPANY_EMAIL))
+#         # notification_msg['To'] = [self_email, 'arianago@live.co.uk']
+#         notification_msg['To'] = [self_email]
+#         notification_msg['Subject'] = 'Client Payment Received'
+#
+#         notification_body = (f'Client Payment Details:\n\n'
+#                              f'Name: {name} {surname}\n'
+#                              f'Amount: R{amount:.2f}\n')
+#         notification_msg.attach(MIMEText(notification_body, 'plain'))
+#
+#         with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
+#             server.starttls()
+#             server.login(COMPANY_EMAIL, '@Cj2022!')
+#             # server.sendmail(COMPANY_EMAIL, ['jarrydchad@gmail.com', 'arianago@live.co.uk'], notification_msg.as_string())
+#             server.sendmail(COMPANY_EMAIL, ['jarrydchad@gmail.com'], notification_msg.as_string())
+#     except Error as e:
+#         logging.error(f'Unable to send email: {e}')
 
 
 def send_email(subject, message, recipients):
@@ -571,8 +752,8 @@ def run_script():
     print_message_and_send_email(message, target_day, recipients)
 
 if __name__ == '__main__':
-    script_thread = threading.Thread(target=run_script)
-    script_thread.start()
+    # script_thread = threading.Thread(target=run_script)
+    # script_thread.start()
     app.run(debug=True, use_reloader=False)  # use_reloader=False to avoid duplicate running
-    script_thread.join()  # Wait for the script thread to finish before stopping the server
+    # script_thread.join()  # Wait for the script thread to finish before stopping the server
     stop_server()
